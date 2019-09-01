@@ -21,8 +21,9 @@ class Task(models.Model):
 
     title = models.CharField(_('Title'), max_length=100)
     description = models.TextField(_('Description'))
+    created_at = models.DateTimeField(auto_now_add=True)
     state = models.SmallIntegerField(choices=STATES, default=NEW)
-    children = models.ManyToManyField('self')
+    children = models.ManyToManyField('self', blank=True) 
 
     def __str__(self):
-        return f"Task: {self.id} - {self.STATES[self.state][1]}"
+        return f"{self.id} - {self.STATES[self.state][1]}"

@@ -1,15 +1,12 @@
 import abc
+from rest_framework.exceptions import APIException
 
 from todo.models import Task
 
 
-class StateErrorException(Exception):
-    
-    def __init__(self, msg):
-        self._msg = msg
-
-    def __str__(self):
-        return self._msg
+class StateErrorException(APIException):
+    status_code = 400
+    default_detail = 'Error Handeling Task state.'
 
 
 class State(metaclass=abc.ABCMeta):
@@ -70,7 +67,7 @@ class TaskIsNewState(State):
         """
         Only tasks with an in-progress states can have other tasks linked to them.
         """
-        raise StateErrorException("New tasks can not be linked.")
+        raise StateErrorException(detail="New tasks can not be linked.")
 
 
 class TaskIsInProgressState(State):
@@ -96,7 +93,7 @@ class TaskIsInProgressState(State):
             - instance: a Task model insatance.
             - kwargs: a dict of Task model fields and values.
         """
-        raise StateErrorException("Tasks In Progress can not be edited.")
+        raise StateErrorException(detail="Tasks In Progress can not be edited.")
 
     def link(self, instance, child):
         """
@@ -108,7 +105,10 @@ class TaskIsInProgressState(State):
             - children: a list of Task model instaces.
         """
         if child.state not in [Task.NEW, Task.IN_PROGRESS]:
-            raise StateErrorException("In-progress task can't be linked to a done task.")
+            raise StateErrorException(detail="In-progress task can't be linked to a done task.")
+
+        if instance == child:
+            raise StateErrorException(detail="Tasks Can not be linked to themselves.")
 
         instance.children.add(child)
         
@@ -133,10 +133,10 @@ class TaskIsDoneState(State):
         return instance
 
     def update(self, instance, **kwargs):
-        raise StateErrorException("Done Tasks can not be edited.")
+        raise StateErrorException(detail="Done Tasks can not be edited.")
     
     def link(self, instance, children):
-        raise StateErrorException("Done Tasks can not be linked.")
+        raise StateErrorException(detail="Done Tasks can not be linked.")
 
 
 class TaskContext:
